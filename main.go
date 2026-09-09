@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type result struct {
@@ -17,6 +19,7 @@ type result struct {
 
 func main() {
 	jsonOutput := flag.Bool("json", false, "emit results as JSON, one object per line")
+	toRoman := flag.Bool("to-roman", false, "treat input as decimal numbers and convert to Roman numerals")
 	flag.Parse()
 
 	lines := flag.Args()
@@ -30,14 +33,14 @@ func main() {
 	}
 
 	if len(lines) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: romanfmt [--json] NUMERAL...")
+		fmt.Fprintln(os.Stderr, "usage: romanfmt [--json] [--to-roman] NUMERAL...")
 		os.Exit(2)
 	}
 
 	exitCode := 0
 	enc := json.NewEncoder(os.Stdout)
 	for _, line := range lines {
-		normalized, value, err := Normalize(line)
+		normalized, value, err := convert(line, *toRoman)
 		r := result{Input: line}
 		if err != nil {
 			r.Error = err.Error()
@@ -63,6 +66,24 @@ func main() {
 	}
 
 	os.Exit(exitCode)
+}
+
+// convert dispatches to the Roman-to-decimal or decimal-to-Roman path
+// depending on the --to-roman flag.
+func convert(line string, toRoman bool) (string, int, error) {
+	if !toRoman {
+		return Normalize(line)
+	}
+
+	n, err := strconv.Atoi(strings.TrimSpace(line))
+	if err != nil {
+		return "", 0, fmt.Errorf("%q is not a decimal number", line)
+	}
+	roman, err := ToRoman(n)
+	if err != nil {
+		return "", 0, err
+	}
+	return roman, n, nil
 }
 
 func readStdinLines() ([]string, error) {

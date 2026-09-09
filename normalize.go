@@ -67,6 +67,14 @@ func Normalize(input string) (string, int, error) {
 	return encode(value), value, nil
 }
 
+// ToRoman converts an integer into its canonical Roman numeral spelling.
+func ToRoman(value int) (string, error) {
+	if value < minValue || value > maxValue {
+		return "", fmt.Errorf("value %d out of range %d-%d", value, minValue, maxValue)
+	}
+	return encode(value), nil
+}
+
 // encode converts an integer into canonical Roman numeral form.
 func encode(value int) string {
 	var b strings.Builder

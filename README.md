@@ -43,6 +43,24 @@ $ ./romanfmt XIIB
 XIIB -> error: invalid character 'B' in "XIIB"
 ```
 
+## Converting the other direction
+
+Pass `--to-roman` to go from decimal to Roman numerals instead:
+
+```
+$ ./romanfmt --to-roman 1994 4
+1994 -> MCMXCIV (1994)
+4 -> IV (4)
+```
+
+It still rejects out-of-range values and non-numeric input:
+
+```
+$ ./romanfmt --to-roman 4000 abc
+4000 -> error: value 4000 out of range 1-3999
+abc -> error: "abc" is not a decimal number
+```
+
 ## JSON output
 
 Pass `--json` to get one JSON object per line instead, which is easier to
