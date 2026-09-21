@@ -61,6 +61,17 @@ $ ./romanfmt --to-roman 4000 abc
 abc -> error: "abc" is not a decimal number
 ```
 
+## Strict mode
+
+By default sloppy repetition like `IIII` is corrected rather than rejected.
+Pass `--strict` to reject anything that isn't already in canonical form:
+
+```
+$ ./romanfmt --strict IIII XIV
+IIII -> error: "IIII" is not canonical (expected "IV")
+XIV -> XIV (14)
+```
+
 ## JSON output
 
 Pass `--json` to get one JSON object per line instead, which is easier to

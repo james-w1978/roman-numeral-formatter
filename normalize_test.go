@@ -35,6 +35,38 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
+func TestNormalizeStrict(t *testing.T) {
+	cases := []struct {
+		in      string
+		want    string
+		value   int
+		wantErr bool
+	}{
+		{"xiv", "XIV", 14, false},
+		{"  MCMxciv  ", "MCMXCIV", 1994, false},
+		{"IIII", "", 0, true},
+		{"VIIII", "", 0, true},
+		{"XIIB", "", 0, true},
+	}
+
+	for _, c := range cases {
+		got, value, err := NormalizeStrict(c.in)
+		if c.wantErr {
+			if err == nil {
+				t.Errorf("NormalizeStrict(%q): expected error, got %q", c.in, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("NormalizeStrict(%q): unexpected error: %v", c.in, err)
+			continue
+		}
+		if got != c.want || value != c.value {
+			t.Errorf("NormalizeStrict(%q) = (%q, %d), want (%q, %d)", c.in, got, value, c.want, c.value)
+		}
+	}
+}
+
 func TestToRoman(t *testing.T) {
 	cases := []struct {
 		in      int

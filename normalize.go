@@ -36,6 +36,16 @@ const (
 // non-canonical repetition like IIII) and returns the canonical spelling
 // plus the integer value it represents.
 func Normalize(input string) (string, int, error) {
+	return normalize(input, false)
+}
+
+// NormalizeStrict behaves like Normalize but rejects any input that isn't
+// already in canonical form, rather than silently correcting it.
+func NormalizeStrict(input string) (string, int, error) {
+	return normalize(input, true)
+}
+
+func normalize(input string, strict bool) (string, int, error) {
 	cleaned := strings.ToUpper(strings.Join(strings.Fields(input), ""))
 	if cleaned == "" {
 		return "", 0, fmt.Errorf("empty input")
@@ -64,7 +74,12 @@ func Normalize(input string) (string, int, error) {
 		return "", 0, fmt.Errorf("value %d out of range %d-%d", value, minValue, maxValue)
 	}
 
-	return encode(value), value, nil
+	canonical := encode(value)
+	if strict && canonical != cleaned {
+		return "", 0, fmt.Errorf("%q is not canonical (expected %q)", input, canonical)
+	}
+
+	return canonical, value, nil
 }
 
 // ToRoman converts an integer into its canonical Roman numeral spelling.
