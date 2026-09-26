@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -21,12 +21,17 @@ func main() {
 	jsonOutput := flag.Bool("json", false, "emit results as JSON, one object per line")
 	toRoman := flag.Bool("to-roman", false, "treat input as decimal numbers and convert to Roman numerals")
 	strict := flag.Bool("strict", false, "reject non-canonical numerals instead of correcting them")
+	delimiter := flag.String("delimiter", "\n", "record separator used when reading stdin")
 	flag.Parse()
 
 	lines := flag.Args()
 	if len(lines) == 0 {
+		if *delimiter == "" {
+			fmt.Fprintln(os.Stderr, "romanfmt: --delimiter must not be empty")
+			os.Exit(2)
+		}
 		var err error
-		lines, err = readStdinLines()
+		lines, err = readStdinRecords(os.Stdin, *delimiter)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "romanfmt: reading stdin:", err)
 			os.Exit(1)
@@ -34,7 +39,7 @@ func main() {
 	}
 
 	if len(lines) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: romanfmt [--json] [--to-roman] [--strict] NUMERAL...")
+		fmt.Fprintln(os.Stderr, "usage: romanfmt [--json] [--to-roman] [--strict] [--delimiter SEP] NUMERAL...")
 		os.Exit(2)
 	}
 
@@ -90,15 +95,24 @@ func convert(line string, toRoman, strict bool) (string, int, error) {
 	return roman, n, nil
 }
 
-func readStdinLines() ([]string, error) {
-	var lines []string
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "" {
+// escapeReplacer expands the backslash escapes users are likely to type on a
+// command line (e.g. --delimiter='\t') into their literal byte, since shells
+// hand flag values to us unescaped otherwise.
+var escapeReplacer = strings.NewReplacer(`\n`, "\n", `\t`, "\t", `\r`, "\r", `\0`, "\x00")
+
+func readStdinRecords(r io.Reader, delimiter string) ([]string, error) {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	delimiter = escapeReplacer.Replace(delimiter)
+	var records []string
+	for _, rec := range strings.Split(string(data), delimiter) {
+		if rec == "" {
 			continue
 		}
-		lines = append(lines, line)
+		records = append(records, rec)
 	}
-	return lines, scanner.Err()
+	return records, nil
 }

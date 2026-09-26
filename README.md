@@ -61,6 +61,21 @@ $ ./romanfmt --to-roman 4000 abc
 abc -> error: "abc" is not a decimal number
 ```
 
+## Custom stdin delimiters
+
+By default, piped input is split on newlines. Pass `--delimiter` to split on
+something else, which is handy for comma-separated or otherwise packed input:
+
+```
+$ printf "xiv,IIII,xl" | ./romanfmt --delimiter ","
+xiv -> XIV (14)
+IIII -> IV (4)
+xl -> XL (40)
+```
+
+Common escapes (`\n`, `\t`, `\r`, `\0`) are recognized so you can pass them as
+plain text on the command line instead of a literal control character.
+
 ## Strict mode
 
 By default sloppy repetition like `IIII` is corrected rather than rejected.
